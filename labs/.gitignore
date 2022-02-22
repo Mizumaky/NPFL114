@@ -1,0 +1,6 @@
+__pycache__/
+logs/
+*.h5
+*.npz
+*.tfrecord
+*.zip
