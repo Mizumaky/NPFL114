@@ -67,6 +67,72 @@
   python -m pip install tensorflow-metal
   ```
 
+- _Errors when running with a GPU_
+
+  If you encounter errors when running with a GPU:
+  - if you are using the GPU also for displaying, try using the following
+    environment variable: `export TF_FORCE_GPU_ALLOW_GROWTH=true`
+  - you can rerun with `export TF_CPP_MIN_LOG_LEVEL=0` environmental variable,
+    which increases verbosity of the log messages.
+
+### TOCEntry: MetaCentrum
+
+- _How to install TensorFlow dependencies on MetaCentrum?_
+
+  To install CUDA, cuDNN and Python 3.8 on MetaCentrum, it is enough to run
+  in every session the following command:
+  ```
+  module add python/3.8.0-gcc-rab6t cuda/cuda-11.2.0-intel-19.0.4-tn4edsz cudnn/cudnn-8.1.0.77-11.2-linux-x64-intel-19.0.4-wx22b5t
+  ```
+
+- _How to run a GPU computation on MetaCentrum?_
+
+  First, read the official MetaCentrum documentation:
+  [Beginners guide](https://wiki.metacentrum.cz/wiki/Beginners_guide),
+  [About scheduling system](https://wiki.metacentrum.cz/wiki/About_scheduling_system),
+  [GPU clusters](https://wiki.metacentrum.cz/wiki/GPU_clusters).
+
+  TL;DR: To run an interactive GPU job with 1 CPU, 1 GPU, 16GB RAM, and 8GB scatch
+  space, run:
+  ```
+  qsub -q gpu -l select=1:ncpus=1:ngpus=1:mem=16gb:scratch_local=8gb -I
+  ```
+
+  To run a script in a non-interactive way, replace the `-I` option with the script to be executed.
+
+  If you want to run a CPU-only computation, remove the `-q gpu` and `ngpus=1:`
+  from the above commands.
+
+### TOCEntry: AIC
+
+- _How to install TensorFlow dependencies on [AIC](https://aic.ufal.mff.cuni.cz)?_
+
+  To install CUDA, cuDNN and Python 3.9 on AIC, you should add the following to
+  your `.profile`:
+  ```
+  export PATH="/lnet/aic/data/python/3.9.9/bin:$PATH"
+  export LD_LIBRARY_PATH="/lnet/aic/opt/cuda/cuda-11.2/lib64:/lnet/aic/opt/cuda/cuda-11.2/cudnn/8.1.1/lib64:/lnet/aic/opt/cuda/cuda-11.2/extras/CUPTI/lib64:$LD_LIBRARY_PATH"
+  ```
+
+- _How to run a GPU computation on AIC?_
+
+  First, read the official AIC documentation:
+  [Submitting CPU Jobs](https://aic.ufal.mff.cuni.cz/index.php/Submitting_CPU_Jobs),
+  [Submitting GPU Jobs](https://aic.ufal.mff.cuni.cz/index.php/Submitting_GPU_Jobs).
+
+  TL;DR: To run an interactive GPU job with 1 CPU, 1 GPU, and 16GB RAM, run:
+  ```
+  qrsh -q gpu.q -l gpu=1,mem_free=16G,h_data=16G -pty yes bash -l
+  ```
+
+  To run a script requiring a GPU in a non-interactive way, use
+  ```
+  qsub -q gpu.q -l gpu=1,mem_free=16G,h_data=16G -cwd -b y SCRIPT_PATH
+  ```
+
+  If you want to run a CPU-only computation, remove the `-q gpu.q` and `gpu=1,`
+  from the above commands.
+
 ### TOCEntry: Git
 
 - _Is it possible to keep the solutions in a Git repository?_
@@ -175,16 +241,6 @@
   should disable any asynchrony, parallelism, or non-determinism and forces
   Python execution (as opposed to trace-compiled graph execution) of
   user-defined functions passed into transformations such as `tf.data.Dataset.map`.
-
-### TOCEntry: GPU
-
-- _Errors when running with a GPU_
-
-  If you encounter errors when running with a GPU:
-  - if you are using the GPU also for displaying, try using the following
-    environment variable: `export TF_FORCE_GPU_ALLOW_GROWTH=true`
-  - you can rerun with `export TF_CPP_MIN_LOG_LEVEL=0` environmental variable,
-    which increases verbosity of the log messages.
 
 ### TOCEntry: tf.data
 

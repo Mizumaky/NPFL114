@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+from typing import Tuple
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2") # Report only TF errors by default
 
 import numpy as np
@@ -17,7 +18,7 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 # If you add more arguments, ReCodEx will keep them with your default values.
 
-def main(args: argparse.Namespace) -> tuple[float, float]:
+def main(args: argparse.Namespace) -> Tuple[float, float]:
     # Fix random seeds and threads
     np.random.seed(args.seed)
     tf.random.set_seed(args.seed)
@@ -60,7 +61,7 @@ def main(args: argparse.Namespace) -> tuple[float, float]:
         # 1. v = cov * v
         #    The matrix-vector multiplication can be computed using `tf.linalg.matvec`.
         # 2. s = l2_norm(v)
-        #    The l2_norm can be computed using `tf.linalg.norm`.
+        #    The l2_norm can be computed using `tf.norm`.
         # 3. v = v / s
         pass
 

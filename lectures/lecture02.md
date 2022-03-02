@@ -1,11 +1,13 @@
 ### Lecture: 2. Training Neural Networks
 #### Date: Feb 21
-#### Slides: https://ufal.mff.cuni.cz/~straka/courses/npfl114/2021/slides/?02
-#### Reading: https://ufal.mff.cuni.cz/~straka/courses/npfl114/2021/slides.pdf/npfl114-02.pdf,PDF Slides
+#### Slides: https://ufal.mff.cuni.cz/~straka/courses/npfl114/2122/slides/?02
+#### Reading: https://ufal.mff.cuni.cz/~straka/courses/npfl114/2122/slides.pdf/npfl114-02.pdf,PDF Slides
 #### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-czech.mp4, CZ Lecture
 #### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-english.mp4, EN Lecture
 #### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-czech.adam.mp4, CZ Practicals Adam
 #### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-czech.practicals.mp4, CZ Practicals
+#### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-english.practicals.mp4, EN Practicals
+#### Video: https://lectures.ms.mff.cuni.cz/video/rec/npfl114/2122/npfl114-02-english.cartpole.mp4, EN CartPole
 #### Questions: #lecture_2_questions
 #### Lecture assignment: sgd_backpropagation
 #### Lecture assignment: sgd_manual

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import numpy as np
 
 parser = argparse.ArgumentParser()
@@ -10,7 +10,7 @@ parser.add_argument("--model_path", default="numpy_entropy_model.txt", type=str,
 parser.add_argument("--recodex", default=False, action="store_true", help="Evaluation in ReCodEx.")
 # If you add more arguments, ReCodEx will keep them with your default values.
 
-def main(args: argparse.Namespace) -> tuple[float, float, float]:
+def main(args: argparse.Namespace) -> Tuple[float, float, float]:
     data_dist: Dict[str, int] = {}  # mapping of symbols to their count
     n: int = 0  # size of input data
     # Load data distribution
@@ -23,9 +23,9 @@ def main(args: argparse.Namespace) -> tuple[float, float, float]:
                 data_dist[line] = 1
             n += 1
     k: int = len(data_dist)  # number of different input symbols
-    # NumPy array containing the data distribution.
+    # Create NumPy array containing the data distribution.
     np_data = np.empty(k, dtype=float)  # np array for symbol probabilities (unordered)
-    # fill np array with data
+    # Fill np array with data
     for i, val in enumerate(data_dist.values()):
         np_data[i] = val/n
 
@@ -57,9 +57,6 @@ def main(args: argparse.Namespace) -> tuple[float, float, float]:
     # manual for/while cycles, but instead use the fact that most NumPy methods
     # operate on all elements (for example `*` is vector element-wise multiplication).
     entropy = -(np_data * np.log(np_data)).sum()  # bonus - computational time reference https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
-
-    # print(np_data)
-    # print(np_model)
 
     # Compute cross-entropy H(data distribution, model distribution).
     # When some data distribution elements are missing in the model distribution,

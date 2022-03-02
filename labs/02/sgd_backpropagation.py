@@ -13,7 +13,7 @@ from mnist import MNIST
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
 parser.add_argument("--batch_size", default=50, type=int, help="Batch size.")
-parser.add_argument("--epochs", default=5, type=int, help="Number of epochs.")
+parser.add_argument("--epochs", default=10, type=int, help="Number of epochs.")
 parser.add_argument("--hidden_layer", default=100, type=int, help="Size of the hidden layer.")
 parser.add_argument("--learning_rate", default=0.1, type=float, help="Learning rate.")
 parser.add_argument("--recodex", default=False, action="store_true", help="Evaluation in ReCodEx.")
@@ -58,10 +58,12 @@ class Model(tf.Module):
                 # TODO: Compute the predicted probabilities of the batch images using `self.predict`
                 probabilities = ...
 
-                # TODO: Compute the loss:
-                # - for every batch example, it is the categorical crossentropy of the
-                #   predicted probabilities and gold batch label
-                # - finally, compute the average across the batch examples
+                # TODO: Manually compute the loss:
+                # - For every batch example, the loss is the categorical crossentropy of the
+                #   predicted probabilities and the gold label. To compute the crossentropy, you can
+                #   - either use `tf.one_hot` to obtain one-hot encoded gold labels,
+                #   - or use `tf.gather` with `batch_dims=1` to "index" the predicted probabilities.
+                # - Finally, compute the average across the batch examples.
                 loss = ...
 
             # We create a list of all variables. Note that a `tf.Module` automatically

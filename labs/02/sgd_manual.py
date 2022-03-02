@@ -3,6 +3,7 @@ import argparse
 import datetime
 import os
 import re
+from typing import Tuple
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2") # Report only TF errors by default
 
 import numpy as np
@@ -13,7 +14,7 @@ from mnist import MNIST
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
 parser.add_argument("--batch_size", default=50, type=int, help="Batch size.")
-parser.add_argument("--epochs", default=5, type=int, help="Number of epochs.")
+parser.add_argument("--epochs", default=10, type=int, help="Number of epochs.")
 parser.add_argument("--hidden_layer", default=100, type=int, help="Size of the hidden layer.")
 parser.add_argument("--learning_rate", default=0.1, type=float, help="Learning rate.")
 parser.add_argument("--recodex", default=False, action="store_true", help="Evaluation in ReCodEx.")
@@ -34,7 +35,7 @@ class Model(tf.Module):
         # - _b2, which is a trainable Variable of size [MNIST.LABELS] initialized to zeros
         ...
 
-    def predict(self, inputs: tf.Tensor) -> tf.Tensor:
+    def predict(self, inputs: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         # TODO(sgd_backpropagation): Define the computation of the network. Notably:
         # - start by reshaping the inputs to shape [inputs.shape[0], -1].
         #   The -1 is a wildcard which is computed so that the number
@@ -66,10 +67,12 @@ class Model(tf.Module):
             # of the batch images using `self.predict`.
 
             # TODO: Compute the gradient of the loss with respect to all
-            # variables. Note that the loss is computed as:
-            # - for every batch example, it is the categorical crossentropy of the
-            #   predicted probabilities and gold batch label
-            # - finally, the individual batch example losses are averaged
+            # variables. Note that the loss is computed as in `sgd_backpropagation`:
+            # - For every batch example, the loss is the categorical crossentropy of the
+            #   predicted probabilities and the gold label. To compute the crossentropy, you can
+            #   - either use `tf.one_hot` to obtain one-hot encoded gold labels,
+            #   - or use `tf.gather` with `batch_dims=1` to "index" the predicted probabilities.
+            # - Finally, compute the average across the batch examples.
             #
             # During the gradient computation, you will need to compute
             # a so-called outer product
