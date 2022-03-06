@@ -3,7 +3,7 @@ import argparse
 import datetime
 import os
 import re
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2") # Report only TF errors by default
+# os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2") # Report only TF errors by default
 
 import numpy as np
 import tensorflow as tf
@@ -39,16 +39,28 @@ def main(args: argparse.Namespace) -> float:
     # Load data
     mnist = MNIST()
 
+    # Prepare argument mapping
+    activations_map = {
+        "none": None, "relu": tf.nn.relu, "tanh": tf.nn.tanh, "sigmoid": tf.nn.sigmoid
+    }
+
     # Create the model
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Input([MNIST.H, MNIST.W, MNIST.C]))
-    # TODO: Finish the model. Namely add:
-    # - a `tf.keras.layers.Flatten()` layer
-    # - `args.hidden_layers` number of fully connected hidden layers
-    #   `tf.keras.layers.Dense()` with  `args.hidden_layer` neurons, using activation
-    #   from `args.activation`, allowing "none", "relu", "tanh", "sigmoid".
-    # - finally, a final fully connected layer with
-    #   `MNIST.LABELS` units and `tf.nn.softmax` activation.
+    # Flat input nodes
+    model.add(tf.keras.layers.Flatten(name="BW_vektor_pixelu"))
+    for i in range(args.hidden_layers):
+        # Densely connected hidden layer nodes
+        model.add(tf.keras.layers.Dense(
+            args.hidden_layer,
+            activation=activations_map[args.activation.lower()],
+            name=f"Skryta_{i}"
+        ))
+    # Output layer with `MNIST.LABELS` nodes and `tf.nn.softmax` activation
+    model.add(tf.keras.layers.Dense(MNIST.LABELS, activation=tf.nn.softmax, name="Vyhodnoceni_labelu"))
+
+    # Print info
+    model.summary()
 
     model.compile(
         optimizer=tf.optimizers.Adam(),
