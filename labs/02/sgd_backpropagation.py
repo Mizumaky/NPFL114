@@ -157,8 +157,18 @@ def main(args: argparse.Namespace) -> float:
         # Evaluate the dev data using `evaluate` on `mnist.dev` dataset
         accuracy = model.evaluate(mnist.dev)
         print("Dev accuracy after epoch {} is {:.2f}".format(epoch + 1, 100 * accuracy), flush=True)
+        # calculate test loss
+        probabilities = model.predict(tf.convert_to_tensor(mnist.dev.data["images"]))
+        labels = tf.convert_to_tensor(mnist.dev.data["labels"])
+        scce = tf.keras.losses.SparseCategoricalCrossentropy()
+        loss = scce(labels, probabilities)
+        print("Dev loss after epoch {} is {:.2f}".format(epoch + 1, loss), flush=True)
+
         with writer.as_default(step=epoch + 1):
             tf.summary.scalar("dev/accuracy", 100 * accuracy)
+            tf.summary.scalar("dev/loss", loss)
+
+
 
     # Evaluate the test data using `evaluate` on `mnist.test` dataset
     accuracy = model.evaluate(mnist.test)

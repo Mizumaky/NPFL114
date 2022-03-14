@@ -25,25 +25,38 @@ parser.add_argument("--threads", default=1, type=int, help="Maximum number of th
 class Model(tf.Module):
     def __init__(self, args: argparse.Namespace) -> None:
         self._args = args
-
-        self._W1 = tf.Variable(tf.random.normal([MNIST.W * MNIST.H * MNIST.C, args.hidden_layer], stddev=0.1, seed=args.seed), trainable=True)
+        # Create trainable variables (init to vectors with random values according to normal distribution / zeros)
+        #   From input to first layer
+        self._W1 = tf.Variable(
+            tf.random.normal([MNIST.W * MNIST.H * MNIST.C, args.hidden_layer], stddev=0.1, seed=args.seed),
+            trainable=True
+        )
         self._b1 = tf.Variable(tf.zeros([args.hidden_layer]), trainable=True)
-
-        # TODO(sgd_backpropagation): Create variables:
-        # - _W2, which is a trainable Variable of size [args.hidden_layer, MNIST.LABELS],
-        #   initialized to `tf.random.normal` value with stddev=0.1 and seed=args.seed,
-        # - _b2, which is a trainable Variable of size [MNIST.LABELS] initialized to zeros
-        ...
+        #   From first layer to output
+        self._W2 = tf.Variable(
+            tf.random.normal([args.hidden_layer, MNIST.LABELS], stddev=0.1, seed=args.seed),
+            trainable=True
+        )
+        self._b2 = tf.Variable(tf.zeros([MNIST.LABELS]), trainable=True)
 
     def predict(self, inputs: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        # TODO(sgd_backpropagation): Define the computation of the network. Notably:
+        # Define the computation of the network with one hidden layer
         # - start by reshaping the inputs to shape [inputs.shape[0], -1].
-        #   The -1 is a wildcard which is computed so that the number
-        #   of elements before and after the reshape fits.
-        # - then multiply the inputs by `self._W1` and then add `self._b1`
-        # - apply `tf.nn.tanh`
+        #   The -1 is a wildcard which is computed so that the number of elements before and after the reshape fits
+        #   This does flatten the vectors into self._args.batch_size x MNIST.W * MNIST.H * MNIST.C
+        #   (it's a matrix since multiple input vectors per batch)
+        shaped_inputs = tf.reshape(inputs, [inputs.shape[0], -1])
+        # - multiply the inputs by wights `self._W1` and add bias `self._b1`
+        hidden_layer_in = tf.linalg.matmul(shaped_inputs, self._W1)
+        hidden_layer_in += self._b1
+        # - apply activation `tf.nn.tanh`
+        hidden_layer_out = tf.nn.tanh(hidden_layer_in)
         # - multiply the result by `self._W2` and then add `self._b2`
+        output_layer_in = tf.linalg.matmul(hidden_layer_out, self._W2)
+        output_layer_in += self._b2
         # - finally apply `tf.nn.softmax` and return the result
+        output_layer_out = tf.nn.softmax(output_layer_in)
+        # Great demo of softmax https://www.youtube.com/watch?v=ytbYRIN0N4g ✨
 
         # TODO: In order to support manual gradient computation, you should
         # return not only the output layer, but also the hidden layer after applying
