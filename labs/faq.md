@@ -5,14 +5,14 @@
 - _Installing to central user packages repository_
 
   You can install all required packages to central user packages repository using
-  `pip3 install --user tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0`.
+  `pip3 install --user tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0 scipy`.
 
 - _Installing to a virtual environment_
 
   Python supports virtual environments, which are directories containing
   independent sets of installed packages. You can create a virtual environment
   by running `python3 -m venv VENV_DIR` followed by
-  `VENV_DIR/bin/pip3 install tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0`
+  `VENV_DIR/bin/pip3 install tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0 scipy`
   (or `VENV_DIR/Scripts/pip3` on Windows).
 
 - _**Windows** installation_
@@ -25,6 +25,12 @@
   - If your Windows TensorFlow fails with `ImportError: DLL load failed`,
     you are probably missing
     [Visual C++ 2019 Redistributable](https://aka.ms/vs/16/release/vc_redist.x64.exe).
+
+  - If you encounter a problem creating the logs in the `args.logdir` directory,
+    a possible cause is that the path is longer than 260 characters, which is
+    the default maximum length of a complete path on Windows. However, you can
+    increase this limit on Windows 10, version 1607 or later, by following
+    the [instructions](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation).
 
 - _**macOS** installation_
 
@@ -109,7 +115,7 @@
     module add python/3.8.0-gcc-rab6t cuda/cuda-11.2.0-intel-19.0.4-tn4edsz cudnn/cudnn-8.1.0.77-11.2-linux-x64-intel-19.0.4-wx22b5t
     python3 -m venv CHOSEN_VENV_DIR
     CHOSEN_VENV_DIR/bin/pip install --no-cache-dir --upgrade pip setuptools
-    CHOSEN_VENV_DIR/bin/pip install --no-cache-dir tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0
+    CHOSEN_VENV_DIR/bin/pip install --no-cache-dir tensorflow==2.8.0 tensorflow-addons==0.16.1 tensorflow-probability==0.16.0 tensorflow-hub==0.12.0 gym==0.20.0 scipy
     ```
 
 - _How to run a GPU computation on MetaCentrum?_
@@ -315,6 +321,9 @@
   for _ in range(3):
       print(*[element.numpy() for element in data])
   ```
+
+  When a GPU is visible, you should create the `generator` explicitly on a CPU
+  using a `with tf.device("/cpu:0"):` block (on macOS, it will crash otherwise).
 
 - _How to call numpy methods or other non-tf functions in `tf.data.Dataset.map`?_
 

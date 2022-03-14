@@ -22,6 +22,7 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 # If you add more arguments, ReCodEx will keep them with your default values.
 
+
 class Model(tf.Module):
     def __init__(self, args: argparse.Namespace) -> None:
         self._args = args
@@ -97,7 +98,7 @@ class Model(tf.Module):
                 loss = scce(labels, probabilities)
 
             # We create a list of all variables. Note that a `tf.Module` automatically
-            # tracks owned variables, so we could also used `self.trainable_variables`
+            # tracks owned variables, so we could also use `self.trainable_variables`
             # (or even `self.variables`, which is useful for loading/saving).
             # variables = [self._W1, self._b1, self._W2, self._b2]
             variables: Tuple[tf.Variable] = self.trainable_variables
@@ -146,7 +147,7 @@ def main(args: argparse.Namespace) -> float:
     mnist = MNIST()
 
     # Create the TensorBoard writer
-    writer = tf.summary.create_file_writer(args.logdir, flush_millis=10*1000)
+    writer = tf.summary.create_file_writer(args.logdir, flush_millis=10 * 1000)
 
     # Create the model
     model = Model(args)
@@ -178,6 +179,7 @@ def main(args: argparse.Namespace) -> float:
 
     # Return test accuracy for ReCodEx to validate
     return accuracy
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)

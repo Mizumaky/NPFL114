@@ -7,6 +7,7 @@ import zipfile
 import numpy as np
 import tensorflow as tf
 
+
 # Loads the Uppercase data.
 # - The data consists of three Datasets
 #   - train
@@ -51,16 +52,18 @@ class UppercaseData:
                 for char in self._text.lower():
                     freqs[char] = freqs.get(char, 0) + 1
 
-                most_frequent = sorted(freqs.items(), key=lambda item:item[1], reverse=True)
+                most_frequent = sorted(freqs.items(), key=lambda item: item[1], reverse=True)
                 for i, (char, freq) in enumerate(most_frequent, len(alphabet_map)):
                     alphabet_map[char] = i
-                    if alphabet and len(alphabet_map) >= alphabet: break
+                    if alphabet and len(alphabet_map) >= alphabet:
+                        break
 
             # Remap lowercased input characters using the alphabet_map
             lcletters = np.zeros(self._size + 2 * window, np.int16)
             for i in range(self._size):
                 char = self._text[i].lower()
-                if char not in alphabet_map: char = "<unk>"
+                if char not in alphabet_map:
+                    char = "<unk>"
                 lcletters[i + window] = alphabet_map[char]
 
             # Generate input batches
@@ -127,7 +130,9 @@ class UppercaseData:
 
         correct = 0
         for i in range(len(gold)):
-            if predictions[i].lower() != gold[i].lower():
+            # Note that just the lower() condition is not enough, for example
+            # u03c2 and u03c3 have both u03c2 as an uppercase character.
+            if predictions[i].lower() != gold[i].lower() and predictions[i].upper() != gold[i].upper():
                 raise RuntimeError("The predictions and gold data differ on position {}: {} vs {}.".format(
                     i, repr(predictions[i:i + 20].lower()), repr(gold[i:i + 20].lower())))
 

@@ -22,6 +22,7 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 # If you add more arguments, ReCodEx will keep them with your default values.
 
+
 def main(args: argparse.Namespace) -> float:
     # Fix random seeds and threads
     np.random.seed(args.seed)
@@ -68,8 +69,8 @@ def main(args: argparse.Namespace) -> float:
         metrics=[tf.metrics.SparseCategoricalAccuracy("accuracy")],
     )
 
-    tb_callback = tf.keras.callbacks.TensorBoard(args.logdir, histogram_freq=1, update_freq=100, profile_batch=0)
-    tb_callback._close_writers = lambda: None # A hack allowing to keep the writers open.
+    tb_callback = tf.keras.callbacks.TensorBoard(args.logdir, histogram_freq=1)
+    tb_callback._close_writers = lambda: None  # A hack allowing to keep the writers open.
     model.fit(
         mnist.train.data["images"], mnist.train.data["labels"],
         batch_size=args.batch_size, epochs=args.epochs,
@@ -84,6 +85,7 @@ def main(args: argparse.Namespace) -> float:
 
     # Return test accuracy for ReCodEx to validate
     return test_logs["accuracy"]
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)

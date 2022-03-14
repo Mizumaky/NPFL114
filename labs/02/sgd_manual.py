@@ -4,7 +4,7 @@ import datetime
 import os
 import re
 from typing import Tuple
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2") # Report only TF errors by default
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
 
 import numpy as np
 import tensorflow as tf
@@ -21,6 +21,7 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Evalu
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 # If you add more arguments, ReCodEx will keep them with your default values.
+
 
 class Model(tf.Module):
     def __init__(self, args: argparse.Namespace) -> None:
@@ -133,7 +134,7 @@ def main(args: argparse.Namespace) -> float:
     mnist = MNIST()
 
     # Create the TensorBoard writer
-    writer = tf.summary.create_file_writer(args.logdir, flush_millis=10*1000)
+    writer = tf.summary.create_file_writer(args.logdir, flush_millis=10 * 1000)
 
     # Create the model
     model = Model(args)
@@ -155,6 +156,7 @@ def main(args: argparse.Namespace) -> float:
 
     # Return test accuracy for ReCodEx to validate
     return accuracy
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
