@@ -25,11 +25,11 @@ parser.add_argument("--threads", default=1, type=int, help="Maximum number of th
 # The neural network model
 class Model(tf.keras.Model):
     def __init__(self, args: argparse.Namespace) -> None:
-        # TODO: Create the model. The template uses the functional API, but
+        # Create the model. The template uses the functional API, but
         # feel free to use subclassing if you want.
         inputs = tf.keras.layers.Input(shape=[MNIST.H, MNIST.W, MNIST.C])
 
-        # TODO: Add CNN layers specified by `args.cnn`, which contains
+        # Add CNN layers specified by `args.cnn`, which contains
         # a comma-separated list of the following layers:
         # - `C-filters-kernel_size-stride-padding`: Add a convolutional layer with ReLU
         #   activation and specified number of filters, kernel size, stride and padding.
@@ -47,12 +47,64 @@ class Model(tf.keras.Model):
         # - `H-hidden_layer_size`: Add a dense layer with ReLU activation and the specified size.
         # - `D-dropout_rate`: Apply dropout with the given dropout rate.
         # You can assume the resulting network is valid; it is fine to crash if it is not.
-        #
+        # Change [ and ] residual layer markers to specific start and end "layers" (..., R, layers, RE, ...)
+        arguments = args.cnn.replace("-[", ",").replace("]", ",RE")
+        # Split by commas
+        layer_specifications = arguments.split(",")
         # Produce the results in the variable `hidden`.
-        hidden = ...
+        hidden = inputs  # We will pass this one changing variable between layers
+        # Init helper variables for residual blocks
+        creating_residual = False
+        ending_residual = False
+        res_in = []
+        # Iterate over comma separated specs
+        for spec in layer_specifications:
+            # Remove any additional [ and ] characters
+            if spec[0] == "[":
+                spec = spec[1:]  # Remove first
+            elif spec[-1] == "]":
+                spec = spec[:-1]  # Remove last
+                ending_residual = True
+            # Split arguments by dash
+            arg = spec.split("-")
+            print(arg)
+            # Convolutional layer
+            if arg[0] == "C":
+                hidden = tf.keras.layers.Conv2D(int(arg[1]), int(arg[2]), int(arg[3]), arg[4], activation="relu")(hidden)
+            # Convolutional layer with batch normalization
+            elif arg[0] == "CB":
+                hidden = tf.keras.layers.Conv2D(int(arg[1]), int(arg[2]), int(arg[3]), arg[4], use_bias=False)(hidden)
+                hidden = tf.keras.layers.BatchNormalization()(hidden)
+                hidden = tf.keras.layers.Activation('relu')(hidden)
+            # Max pooling layer
+            elif arg[0] == "M":
+                hidden = tf.keras.layers.MaxPooling2D(eval(arg[1]), eval(arg[2]), padding="valid")(hidden)
+            # Flatten layer
+            elif arg[0] == "F":
+                hidden = tf.keras.layers.Flatten()(hidden)
+            # Dense layer
+            elif arg[0] == "H":
+                hidden = tf.keras.layers.Dense(int(arg[1]))(hidden)
+            # Dropout layer
+            elif arg[0] == "D":
+                hidden = tf.keras.layers.Dropout(float(arg[1]))(hidden)
+            # Start residual block
+            elif arg[0] == "R":
+                creating_residual = True
+                res_in = hidden  # Save the current input to be copied
+                print("Residual start")
+            else:
+                print("Unknown arg '" + arg[0] + "'")
+            # End residual block
+            if ending_residual:
+                # Mix the saved input with current layer
+                hidden = tf.keras.layers.Add()([res_in, hidden])
+                ending_residual = False
+                creating_residual = False
+                print("Residual end")
 
         # Add the final output layer
-        outputs = tf.keras.layers.Dense(MNIST.LABELS, activation=tf.nn.softmax)(hidden)
+        outputs = tf.keras.layers.Dense(MNIST.LABELS, activation=tf.nn.softmax, name="output_layer")(hidden)
 
         super().__init__(inputs=inputs, outputs=outputs)
         self.compile(
@@ -81,6 +133,7 @@ def main(args: argparse.Namespace) -> Dict[str, float]:
 
     # Create the model and train it
     model = Model(args)
+    model.summary()
 
     logs = model.fit(
         mnist.train.data["images"], mnist.train.data["labels"],
