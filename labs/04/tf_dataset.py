@@ -3,11 +3,15 @@ import argparse
 import datetime
 import os
 import re
+import typing
 from typing import Dict, Tuple
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
-
+# os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras as k
+if typing.TYPE_CHECKING:
+    from keras.api._v2 import keras as k
 
 from cifar10 import CIFAR10
 
@@ -23,7 +27,7 @@ parser.add_argument("--threads", default=1, type=int, help="Maximum number of th
 
 def main(args: argparse.Namespace) -> Dict[str, float]:
     # Fix random seeds and threads
-    tf.keras.utils.set_random_seed(args.seed)
+    k.utils.set_random_seed(args.seed)
     tf.config.threading.set_inter_op_parallelism_threads(args.threads)
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
 
@@ -31,23 +35,23 @@ def main(args: argparse.Namespace) -> Dict[str, float]:
     args.logdir = os.path.join("logs", "{}-{}-{}".format(
         os.path.basename(globals().get("__file__", "notebook")),
         datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S"),
-        ",".join(("{}={}".format(re.sub("(.)[^_]*_?", r"\1", k), v) for k, v in sorted(vars(args).items())))
+        ",".join(("{}={}".format(re.sub("(.)[^_]*_?", r"\1", key), val) for key, val in sorted(vars(args).items())))
     ))
 
     # Load the data
     cifar = CIFAR10(size={"dev": 1000})
 
     # Create the model
-    inputs = tf.keras.layers.Input(shape=[CIFAR10.H, CIFAR10.W, CIFAR10.C])
-    hidden = tf.keras.layers.Conv2D(16, 3, 2, "same", activation=tf.nn.relu)(inputs)
-    hidden = tf.keras.layers.Conv2D(16, 3, 1, "same", activation=tf.nn.relu)(hidden)
-    hidden = tf.keras.layers.Conv2D(24, 3, 2, "same", activation=tf.nn.relu)(hidden)
-    hidden = tf.keras.layers.Conv2D(24, 3, 1, "same", activation=tf.nn.relu)(hidden)
-    hidden = tf.keras.layers.Conv2D(32, 3, 2, "same", activation=tf.nn.relu)(hidden)
-    hidden = tf.keras.layers.Conv2D(32, 3, 1, "same", activation=tf.nn.relu)(hidden)
-    hidden = tf.keras.layers.Flatten()(hidden)
-    hidden = tf.keras.layers.Dense(200, activation=tf.nn.relu)(hidden)
-    outputs = tf.keras.layers.Dense(CIFAR10.LABELS, activation=tf.nn.softmax)(hidden)
+    inputs = k.layers.Input(shape=[CIFAR10.H, CIFAR10.W, CIFAR10.C])
+    hidden = k.layers.Conv2D(16, 3, 2, "same", activation=tf.nn.relu)(inputs)
+    hidden = k.layers.Conv2D(16, 3, 1, "same", activation=tf.nn.relu)(hidden)
+    hidden = k.layers.Conv2D(24, 3, 2, "same", activation=tf.nn.relu)(hidden)
+    hidden = k.layers.Conv2D(24, 3, 1, "same", activation=tf.nn.relu)(hidden)
+    hidden = k.layers.Conv2D(32, 3, 2, "same", activation=tf.nn.relu)(hidden)
+    hidden = k.layers.Conv2D(32, 3, 1, "same", activation=tf.nn.relu)(hidden)
+    hidden = k.layers.Flatten()(hidden)
+    hidden = k.layers.Dense(200, activation=tf.nn.relu)(hidden)
+    outputs = k.layers.Dense(CIFAR10.LABELS, activation=tf.nn.softmax)(hidden)
 
     # Compile the model
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
@@ -56,16 +60,17 @@ def main(args: argparse.Namespace) -> Dict[str, float]:
         loss=tf.losses.SparseCategoricalCrossentropy(),
         metrics=[tf.metrics.SparseCategoricalAccuracy(name="accuracy")],
     )
-    tb_callback = tf.keras.callbacks.TensorBoard(args.logdir)
+    tb_callback = k.callbacks.TensorBoard(args.logdir)
 
-    # TODO: Create `train` and `dev` datasets by using
+    # Create `train` and `dev` datasets by using
     # `tf.data.Dataset.from_tensor_slices` on cifar.train and cifar.dev.
     # The structure of a single example is inferred from the argument
     # of `from_tensor_slices` -- in our case we want each example to
     # be a pair of `(input_image, target_label)`, so we need to pass
     # a pair `(data["images"], data["labels"])` to `from_tensor_slices`.
-    train = ...
-    dev = ...
+    # This is because defaultly keras methods expect tuples - input and output
+    train = tf.data.Dataset.from_tensor_slices((cifar.train.data["images"], cifar.train.data["images"]))
+    dev = tf.data.Dataset.from_tensor_slices((cifar.dev.data["images"], cifar.dev.data["images"]))
 
     # Simple data augmentation
     with tf.device("/cpu:0"):
@@ -86,24 +91,27 @@ def main(args: argparse.Namespace) -> Dict[str, float]:
         )
         return image, label
 
-    # TODO: Now prepare the training pipeline.
+    # Now prepare the training pipeline.
     # - first, use the `.take(5000)` method to utilize only the first 5000 examples
     # - call `.shuffle(5000, seed=args.seed)` to shuffle the data using
     #   the given seed and a buffer of the size of the whole data
     # - call `.map(train_augment)` to perform the dataset augmentation
+    # PS this is always computed as tf.function!
     # - finally call `.batch(args.batch_size)` to generate batches
     # - optionally, you might want to add `.prefetch(tf.data.AUTOTUNE)` as
     #   the last call -- it allows the pipeline to run in parallel with
     #   the training process, dynamically adjusting the number of threads
     #   to fully saturate the training process
-    train = ...
+    # PS could overwrite train variable to forget the previous dataset, but this way, we can keep both new n old
+    train2 = train.take(5000).shuffle(5000, seed=args.seed).map(train_augment).batch(args.batch_size).prefetch(tf.data.AUTOTUNE)
 
-    # TODO: Prepare the `dev` pipeline
+    # Prepare the `dev` pipeline
     # - just use `.batch(args.batch_size)` to generate batches
-    dev = ...
+    dev2 = dev.batch(args.batch_size)
 
     # Train
-    logs = model.fit(train, epochs=args.epochs, validation_data=dev, callbacks=[tb_callback])
+    model.summary()
+    logs = model.fit(train2, epochs=args.epochs, validation_data=dev2, callbacks=[tb_callback])
 
     # Return development metrics for ReCodEx to validate
     return {metric: values[-1] for metric, values in logs.history.items() if metric.startswith("val_")}
