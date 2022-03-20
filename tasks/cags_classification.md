@@ -6,7 +6,7 @@ The goal of this assignment is to use pretrained EfficientNet-B0 model to
 achieve best accuracy in CAGS classification.
 
 The [CAGS dataset](https://ufal.mff.cuni.cz/~straka/courses/npfl114/2122/demos/cags_train.html) consists
-of images of **ca**ts and **do**gs of size $224×224$, each classified in one of
+of images of **ca**ts and do**gs** of size $224×224$, each classified in one of
 the 34 breeds and each containing a mask indicating the presence of the animal.
 To load the dataset, use the [cags_dataset.py](https://github.com/ufal/npfl114/tree/master/labs/05/cags_dataset.py)
 module. The dataset is stored in a
@@ -15,7 +15,7 @@ and each element is encoded as a
 [tf.train.Example](https://www.tensorflow.org/api_docs/python/tf/train/Example),
 which is decoded using the `CAGS.parse` method.
 
-To load the EfficientNet-B0, use the the provided
+To load the EfficientNet-B0, use the provided
 [efficient_net.py](https://github.com/ufal/npfl114/tree/master/labs/05/efficient_net.py)
 module. Its method `pretrained_efficientnet_b0(include_top, dynamic_input_shape=False)`:
 - downloads the pretrained weights if they are not found;
@@ -45,7 +45,7 @@ estimates on the batch) or in inference regime. There is one exception though
 inference regime even when `training == True`._
 
 The task is a [_competition_](https://ufal.mff.cuni.cz/courses/npfl114/2122-summer#competitions). Everyone who submits a solution
-which achieves at least _90%_ test set accuracy will get 5 points; the rest
+which achieves at least _90%_ test set accuracy will get 4 points; the rest
 5 points will be distributed depending on relative ordering of your solutions.
 
 You may want to start with the
