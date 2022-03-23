@@ -2,7 +2,7 @@
 import argparse
 import os
 import time
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
+# os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
 
 import numpy as np
 import tensorflow as tf
@@ -13,7 +13,7 @@ import imagenet_classes
 parser = argparse.ArgumentParser()
 parser.add_argument("images", nargs="+", type=str, help="Files to classify.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
-parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
+parser.add_argument("--threads", default=10, type=int, help="Maximum number of threads to use.")
 
 
 def main(args: argparse.Namespace) -> None:
@@ -36,11 +36,20 @@ def main(args: argparse.Namespace) -> None:
         # Compute the prediction
         start = time.time()
         [prediction], *_ = efficientnet_b0.predict(tf.expand_dims(image, 0))
-        print("Image {} [{} ms]: label {}".format(
+        print("Image {} [{} ms]:".format(
             image_path,
             1000 * (time.time() - start),
-            imagenet_classes.imagenet_classes[tf.argmax(prediction)]
+            # imagenet_classes.imagenet_classes[tf.argmax(prediction)]
         ))
+        # get best predicitons
+        sorted_indexes = prediction.argsort()[::-1]
+        for i in sorted_indexes:
+            if prediction[i] < 0.05:
+                break
+            print("{:.2%} {}".format(
+                prediction[i],
+                imagenet_classes.imagenet_classes[i]
+            ))
 
 
 if __name__ == "__main__":

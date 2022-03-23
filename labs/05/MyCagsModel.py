@@ -1,44 +1,33 @@
-#!/usr/bin/env python3
 import argparse
 import datetime
 import os
 import re
 import typing
 from typing import Dict
-# Team: 7797f596-9326-11ec-986f-f39926f24a9c, 449dba85-9adb-11ec-986f-f39926f24a9c
-
-# os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
-# os.add_dll_directory("C:/Program Files Custom/zlib123dllx64/dll_x64")
-# os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin")
-# os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/include")
-# os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/extras/CUPTI/lib64")
-
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras as k
-
 if typing.TYPE_CHECKING:
     from keras.api._v2 import keras as k
 # fix for intellisense as in here: https://github.com/tensorflow/tensorflow/issues/53144
-
-from cifar10 import CIFAR10
-
-# TODO: Define reasonable defaults and optionally more parameters
-parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=512, type=int, help="Batch size.")
-parser.add_argument("--cnn",
-                    default="model_def_01",
-                    type=str, help="Name of file containing CNN architecture definition.")
-parser.add_argument("--epochs", default=100, type=int, help="Number of epochs.")
-parser.add_argument("--seed", default=42, type=int, help="Random seed.")
-parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
-
+from cags_dataset import CAGS
 
 # The neural network model
-class Model(k.Model):
+class MyCagsModel(k.Model):
     def __init__(self, args: argparse.Namespace) -> None:
+        # Example arguments
+        inputs = k.layers.Input(shape=[CAGS.H, CAGS.W, CAGS.C])
 
-        inputs = k.layers.Input(shape=[CIFAR10.H, CIFAR10.W, CIFAR10.C])
+        # Prepare regularizer?
+        L2_reg = tf.keras.regularizers.L1L2(
+            l1=0.0, l2=0.01
+        )
+        L1L2_reg = tf.keras.regularizers.L1L2(
+            l1=0.01, l2=0.01
+        )
+        L1_reg = tf.keras.regularizers.L1L2(
+            l1=0.01, l2=0.0
+        )
 
         with open(args.cnn, 'r') as file:
             # Change [ and ] residual layer markers to specific start and end "layers" (..., R, layers, RE, ...)
@@ -74,7 +63,7 @@ class Model(k.Model):
                     use_bias = True
                     add_relu = True
 
-                x = k.layers.Conv2D(filters, kernel_size, strides, padding, activation=activation, use_bias=use_bias)(x)
+                x = k.layers.Conv2D(filters, kernel_size, strides, padding, activation=activation, use_bias=use_bias, kernel_initializer="he_uniform")(x)
                 print(
                     f"Conv2D\n\tfilters = {filters}\n\tkernel_size = {kernel_size}\n\tstrides = {strides}\n\tpadding ="
                     f" {padding}\n\tactivation = {activation}\n\tuse_bias = {use_bias}")
@@ -124,57 +113,12 @@ class Model(k.Model):
                 print(f"Unknown arg '{arg[0]}'")
 
         # Add the final output layer
-        outputs = k.layers.Dense(CIFAR10.LABELS, activation=tf.nn.softmax, name="output_layer")(x)
+        outputs = k.layers.Dense(CAGS.LABELS, activation=tf.nn.softmax, name="output_layer")(x)
 
         super().__init__(inputs=inputs, outputs=outputs)
         self.compile(
-            optimizer=tf.optimizers.Adam(),
+            optimizer=k.optimizers.Adam(learning_rate=k.optimizers.schedules.CosineDecay()),
             loss=tf.losses.SparseCategoricalCrossentropy(),
             metrics=[tf.metrics.SparseCategoricalAccuracy(name="accuracy")],
         )
         self.tb_callback = k.callbacks.TensorBoard(args.logdir)
-
-
-def main(args: argparse.Namespace) -> None:
-    # Fix random seeds and threads
-    tf.keras.utils.set_random_seed(args.seed)
-    tf.config.threading.set_inter_op_parallelism_threads(args.threads)
-    tf.config.threading.set_intra_op_parallelism_threads(args.threads)
-
-    # Create logdir name
-    args.logdir = os.path.join("logs", "{}-{}-{}".format(
-        os.path.basename(globals().get("__file__", "notebook")),
-        datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S"),
-        ",".join(("{}={}".format(re.sub("(.)[^_]*_?", r"\1", key), val) for key, val in sorted(vars(args).items())))
-    ))
-
-    # Load data
-    cifar = CIFAR10()
-
-    # TODO: Create the model and train it
-    model = Model(args)
-
-    train_generator = k.preprocessing.image.ImageDataGenerator(rotation_range=20, width_shift_range=0.1,
-                                                               height_shift_range=0.1, zoom_range=0.2,
-                                                               horizontal_flip=True)
-
-    logs = model.fit(
-        train_generator.flow(x=cifar.train.data["images"], y=cifar.train.data["labels"], batch_size=args.batch_size,
-                             seed=args.seed),
-        shuffle=False, epochs=args.epochs,
-        validation_data=(cifar.dev.data["images"], cifar.dev.data["labels"]),
-        callbacks=[model.tb_callback],
-    )
-
-    # Generate test set annotations, but in `args.logdir` to allow parallel execution.
-    os.makedirs(args.logdir, exist_ok=True)
-    with open(os.path.join(args.logdir, "cifar_competition_test.txt"), "w", encoding="utf-8") as predictions_file:
-        for probs in model.predict(cifar.test.data["images"], batch_size=args.batch_size):
-            print(np.argmax(probs), file=predictions_file)
-
-    return {metric: values[-1] for metric, values in logs.history.items() if metric.startswith("val_")}
-
-
-if __name__ == "__main__":
-    args = parser.parse_args([] if "__file__" not in globals() else None)
-    main(args)

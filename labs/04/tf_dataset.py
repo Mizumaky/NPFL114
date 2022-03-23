@@ -6,7 +6,7 @@ import re
 import typing
 from typing import Dict, Tuple
 # os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # Report only TF errors by default
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras as k
@@ -69,8 +69,8 @@ def main(args: argparse.Namespace) -> Dict[str, float]:
     # be a pair of `(input_image, target_label)`, so we need to pass
     # a pair `(data["images"], data["labels"])` to `from_tensor_slices`.
     # This is because defaultly keras methods expect tuples - input and output
-    train = tf.data.Dataset.from_tensor_slices((cifar.train.data["images"], cifar.train.data["images"]))
-    dev = tf.data.Dataset.from_tensor_slices((cifar.dev.data["images"], cifar.dev.data["images"]))
+    train = tf.data.Dataset.from_tensor_slices((cifar.train.data["images"], cifar.train.data["labels"]))
+    dev = tf.data.Dataset.from_tensor_slices((cifar.dev.data["images"], cifar.dev.data["labels"]))
 
     # Simple data augmentation
     with tf.device("/cpu:0"):
